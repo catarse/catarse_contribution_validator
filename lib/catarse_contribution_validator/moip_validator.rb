@@ -47,11 +47,13 @@ module CatarseContributionValidator
       MoIP::Client.query(self.contribution.payment_token)
     rescue MoIP::WebServerResponseError => e
       puts e.inspect
-
+      puts "Verificando PayPal"
       transaction_paypal = CatarseContributionValidator::PaypalValidator.new(self.contribution)
       if transaction_paypal.in_paypal?
+        puts 'Existe no PayPal... Executando PayPal Validator'
         transaction_paypal.run_with_search
       else
+        puts 'Nao existente no PayPal'
         force_update_to_moip
       end
 
