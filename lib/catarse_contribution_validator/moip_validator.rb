@@ -20,15 +20,21 @@ module CatarseContributionValidator
           puts payment.inspect
 
           case payment['Status']
-          when 'Estornado' || 'Reembolsado' && !self.contribution.refunded? then
-            force_adjust_on_contribution
-            self.contribution.refund
-          when 'Autorizado' || 'Concluido' && !self.contribution.confirmed? then
-            force_adjust_on_contribution
-            self.contribution.confirm
-          when 'BoletoImpresso' || 'EmAnalise' && self.contribution.pending?
-            force_adjust_on_contribution
-            self.contribution.waiting
+          when 'Estornado', 'Reembolsado' then
+            unless self.contribution.refunded?
+              force_adjust_on_contribution
+              self.contribution.refund
+            end
+          when 'Autorizado', 'Concluido' then
+            unless self.contribution.confirmed?
+              force_adjust_on_contribution
+              self.contribution.confirm
+            end
+          when 'BoletoImpresso', 'EmAnalise' then
+            unless self.contribution.pending?
+              force_adjust_on_contribution
+              self.contribution.waiting
+            end
           end
         end
       end

@@ -45,12 +45,16 @@ module CatarseContributionValidator
       self.current_details = get_transaction_details
 
       case self.current_details.params['payment_status']
-      when 'Refunded' && !@contribution.refunded? then
-        force_adjust_on_contribution
-        self.contribution.refund
-      when 'Completed' && !@contribution.confirmed? then
-        force_adjust_on_contribution
-        self.contribution.confirm
+      when 'Refunded' then
+        unless self.contribution.refunded?
+          force_adjust_on_contribution
+          self.contribution.refund
+        end
+      when 'Completed' then
+        unless self.contribution.confirmed?
+          force_adjust_on_contribution
+          self.contribution.confirm
+        end
       end
     end
 
