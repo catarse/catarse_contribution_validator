@@ -13,7 +13,12 @@ module CatarseContributionValidator
         if self.current_details['Autorizacao'].present? && self.current_details['Autorizacao']['Pagamento'].present?
           payment = self.current_details['Autorizacao']['Pagamento']
 
-          puts self.current_details.inspect
+          if payment.is_a?(Array)
+            payment = payment[0]
+          end
+
+          puts payment.inspect
+
           case payment['Status']
           when 'Estornado' || 'Reembolsado' && !self.contribution.refunded? then
             force_adjust_on_contribution
@@ -31,15 +36,34 @@ module CatarseContributionValidator
 
     def get_transaction_details
       MoIP::Client.query(self.contribution.payment_token)
-    rescue Exception => e
+    rescue MoIP::WebServerResponseError => e
       puts e.inspect
+
+      transaction_paypal = CatarseContributionValidator::PaypalValidator.new(self.contribution)
+      if transaction_paypal.in_paypal?
+        transaction_paypal.run_with_search
+      else
+        force_update_to_moip
+      end
+
       nil
     end
 
+    def force_update_to_moip
+      self.contribution.update_attributes({
+        payment_method: CatarseContributionValidator::ServiceTypes::MOIP
+      })
+    end
+
     def force_adjust_on_contribution
+      tax = if self.current_details['Autorizacao']['Pagamento'].is_a?(Array)
+              self.current_details['Autorizacao']['Pagamento'][0]['TaxaMoIP'].to_f
+            else
+              self.current_details['Autorizacao']['Pagamento']['TaxaMoIP'].to_f
+            end
       self.contribution.update_attributes({
         payment_method: CatarseContributionValidator::ServiceTypes::MOIP,
-        payment_service_fee: self.current_details['Autorizacao']['Pagamento']['TaxaMoIP'].to_f
+        payment_service_fee: tax
       })
     end
   end
