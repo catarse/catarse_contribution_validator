@@ -1,0 +1,8 @@
+require "catarse_contribution_validator/engine"
+require "catarse_contribution_validator/validate"
+require "catarse_contribution_validator/service_types"
+require "catarse_contribution_validator/paypal_validator"
+require "catarse_contribution_validator/moip_validator"
+
+module CatarseContributionValidator
+end
